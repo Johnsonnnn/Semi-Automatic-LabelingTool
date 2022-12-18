@@ -240,6 +240,16 @@ class SemiAutomaticLabel:
             self.remove_json_file(self.out_dir)
 
         if self.check_use_frame_range():
+            if self.frame_range[0] < 2 or (self.frame_range[0] >= self.frame_range[1] and self.frame_range[1] != -1) or (self.frame_range[1] <= 2 and self.frame_range[1] != -1):
+                print('\n`frame_range` invalid')
+                print('Support')
+                print('start from: 2')
+                print('end to: -1')
+                print('Example: [2, 100]')
+                print('Example: [2, -1]')
+                print('Example: [10, -1]')
+                exit()
+
             print('Use frame range:', self.frame_range)
 
         if self.read_from_video:
