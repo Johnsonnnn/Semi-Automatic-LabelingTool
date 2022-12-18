@@ -23,7 +23,6 @@ private:
     void remove_json_file();
     bool check_use_frame_range(std::string mode);
     void generate_colors();
-    std::vector<std::string> get_line(std::string line);
     void load_labeled_data(cv::Mat frame, std::filesystem::path save_txt_path);
     std::string remove_space(std::string line);
     std::vector<int> point2xyminmax(cv::Rect2i p);

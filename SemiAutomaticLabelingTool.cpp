@@ -141,27 +141,6 @@ void SemiAutomaticLabel::generate_colors()
     return;
 }
 
-vector<string> SemiAutomaticLabel::get_line(string line)
-{
-    int curr = 0;
-    int pos = 0;
-    string sub_;
-    vector<string> new_line;
-    while (true)
-    {
-        pos = line.find("\r", curr);
-        if (pos != -1)
-        {
-            sub_ = line.substr(curr, pos - curr);
-            new_line.push_back(sub_);
-        }
-        else
-            break;
-        curr = pos + 1;
-    }
-    return new_line;
-}
-
 void SemiAutomaticLabel::load_labeled_data(Mat frame, filesystem::path save_txt_path)
 {
     /*
@@ -194,44 +173,37 @@ void SemiAutomaticLabel::load_labeled_data(Mat frame, filesystem::path save_txt_
         if (line == "")
             continue;
 
-        vector<string> lines = this->get_line(line);
+        color = this->colors[i % color_len];
 
-        int c = 0;
-        for (string new_line : lines)
+        curr = 0;
+        pos = 0;
+
+        box.clear();
+        for (int j = 0; pos != string::npos && pos != -1; ++j)
         {
-            color = this->colors[c % color_len];
+            pos = line.find(" ", curr);
+            item = line.substr(curr, pos - curr);
+            if (j == 0)
+                choiced_class_name = stoi(item);
+            else if (j == 1 || j == 3)
+                box.push_back(stof(item) * w);
+            else if (j == 2 || j == 4)
+                box.push_back(stof(item) * h);
 
-            curr = 0;
-            pos = 0;
-
-            box.clear();
-            for (int j = 0; pos != string::npos && pos != -1; ++j)
-            {
-                pos = new_line.find(" ", curr);
-                item = new_line.substr(curr, pos - curr);
-                if (j == 0)
-                    choiced_class_name = stoi(item);
-                else if (j == 1 || j == 3)
-                    box.push_back(stof(item) * w);
-                else if (j == 2 || j == 4)
-                    box.push_back(stof(item) * h);
-
-                curr = pos + 1;
-            }
-
-            int xmin = (int)(box[0] - box[2] / 2);
-            int ymin = (int)(box[1] - box[3] / 2);
-            int xmax = (int)(box[0] + box[2] / 2);
-            int ymax = (int)(box[1] + box[3] / 2);
-
-            rectangle(frame, Point(xmin, ymin), Point(xmax, ymax),
-                      Scalar(color[0], color[1], color[2]),
-                      3);
-            putText(frame, this->names[choiced_class_name], Point(xmin, ymin - 10), FONT_HERSHEY_DUPLEX, 1,
-                    Scalar(color[0], color[1], color[2]),
-                    1, LINE_AA);
-            ++c;
+            curr = pos + 1;
         }
+
+        int xmin = (int)(box[0] - box[2] / 2);
+        int ymin = (int)(box[1] - box[3] / 2);
+        int xmax = (int)(box[0] + box[2] / 2);
+        int ymax = (int)(box[1] + box[3] / 2);
+
+        rectangle(frame, Point(xmin, ymin), Point(xmax, ymax),
+                  Scalar(color[0], color[1], color[2]),
+                  3);
+        putText(frame, this->names[choiced_class_name], Point(xmin, ymin - 10), FONT_HERSHEY_DUPLEX, 1,
+                Scalar(color[0], color[1], color[2]),
+                1, LINE_AA);
     }
     ifs.close();
 
@@ -320,52 +292,47 @@ void SemiAutomaticLabel::remove_labeled_data(filesystem::path save_txt_path, vec
         if (line == "")
             continue;
 
-        vector<string> lines = this->get_line(line);
+        curr = 0;
+        pos = 0;
 
-        for (string new_line : lines)
+        box.clear();
+
+        for (int j = 0; pos != string::npos && pos != -1; ++j)
         {
-            curr = 0;
-            pos = 0;
+            pos = line.find(" ", curr);
+            item = line.substr(curr, pos - curr);
 
-            box.clear();
+            if (j == 0)
+                choiced_class_name_old = stoi(item);
+            else if (j == 1 || j == 3)
+                box.push_back(stof(item) * w);
+            else if (j == 2 || j == 4)
+                box.push_back(stof(item) * h);
 
-            for (int j = 0; pos != string::npos && pos != -1; ++j)
+            curr = pos + 1;
+        }
+
+        int xmin = (int)(box[0] - box[2] / 2);
+        int ymin = (int)(box[1] - box[3] / 2);
+        int xmax = (int)(box[0] + box[2] / 2);
+        int ymax = (int)(box[1] + box[3] / 2);
+
+        vector<int> box_({xmin, ymin, xmax, ymax});
+
+        float iou = this->compute_iou(pointxy, box_);
+
+        if (this->delete_one_class)
+        {
+            if (iou > 0 && this->names[choiced_class_name_old] == choiced_class_name)
             {
-                pos = new_line.find(" ", curr);
-                item = new_line.substr(curr, pos - curr);
-
-                if (j == 0)
-                    choiced_class_name_old = stoi(item);
-                else if (j == 1 || j == 3)
-                    box.push_back(stof(item) * w);
-                else if (j == 2 || j == 4)
-                    box.push_back(stof(item) * h);
-
-                curr = pos + 1;
-            }
-
-            int xmin = (int)(box[0] - box[2] / 2);
-            int ymin = (int)(box[1] - box[3] / 2);
-            int xmax = (int)(box[0] + box[2] / 2);
-            int ymax = (int)(box[1] + box[3] / 2);
-
-            vector<int> box_({xmin, ymin, xmax, ymax});
-
-            float iou = this->compute_iou(pointxy, box_);
-
-            if (this->delete_one_class)
-            {
-                if (iou > 0 && this->names[choiced_class_name_old] == choiced_class_name)
-                {
-                }
-                else
-                    update_line.push_back(new_line);
             }
             else
-            {
-                if (iou == 0)
-                    update_line.push_back(new_line);
-            }
+                update_line.push_back(line);
+        }
+        else
+        {
+            if (iou == 0)
+                update_line.push_back(line);
         }
     }
     ifs.close();
@@ -380,7 +347,7 @@ void SemiAutomaticLabel::remove_labeled_data(filesystem::path save_txt_path, vec
         }
 
         for (string x : update_line)
-            ofs << x + "\r\n";
+            ofs << x + "\n";
         ofs.close();
     }
 
@@ -487,7 +454,7 @@ void SemiAutomaticLabel::write_point2txt(vector<float> yolo_point, string choice
 
     if (found)
     {
-        line = format("%d %f %f %f %f\r\n", idx, yolo_point[0], yolo_point[1], yolo_point[2], yolo_point[3]);
+        line = format("%d %f %f %f %f", idx, yolo_point[0], yolo_point[1], yolo_point[2], yolo_point[3]);
         update_line.push_back(line);
     }
     else
@@ -504,7 +471,7 @@ void SemiAutomaticLabel::write_point2txt(vector<float> yolo_point, string choice
     }
 
     for (string x : update_line)
-        ofs << x;
+        ofs << x + "\n";
     ofs.close();
 
     return;
