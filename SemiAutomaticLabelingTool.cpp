@@ -84,6 +84,7 @@ void SemiAutomaticLabel::read_labels_file()
     }
     ifs.close();
     this->print_labels();
+
     return;
 }
 
@@ -94,12 +95,12 @@ void SemiAutomaticLabel::print_labels()
     for (auto it : this->names)
     {
         if (i == 0)
-            cout << it;
+            cout << "['" << it << "'";
         else
-            cout << " " << it;
+            cout << ", '" << it << "'";
         ++i;
     }
-    cout << endl;
+    cout << "]" << endl;
 
     return;
 }
@@ -242,8 +243,7 @@ string SemiAutomaticLabel::remove_space(string line)
     auto it = unique(line.begin(), line.end(), this->isBothSpace);
     line.erase(it, line.end());
 
-    if (line.find(" ") != string::npos)
-        line = line.replace(line.find(" "), 1, "");
+    line.erase(line.find_last_not_of(" ") + 1);
 
     return line;
 }
@@ -693,11 +693,11 @@ void SemiAutomaticLabel::start()
         else if (keyName == 'a' || (this->check_use_frame_range("a") && frame_id == this->frame_range[0]))
         {
             this->start_mode = "";
-            string input_msg = "==================================================\n";
+            string input_msg = "==================================================";
             cout << input_msg << endl;
             this->print_labels();
             cout << "Input Class Name: ";
-            cin >> choiced_class_name;
+            getline(cin, choiced_class_name);
 
             choiced_class_name = this->remove_space(choiced_class_name);
 
@@ -707,7 +707,7 @@ void SemiAutomaticLabel::start()
                 cout << input_msg << endl;
                 this->print_labels();
                 cout << "Input Class Name: ";
-                cin >> choiced_class_name;
+                getline(cin, choiced_class_name);
 
                 choiced_class_name = this->remove_space(choiced_class_name);
             }
@@ -743,11 +743,11 @@ void SemiAutomaticLabel::start()
             removeItem = true;
             if (this->delete_one_class)
             {
-                string input_msg = "==================================================\n";
+                string input_msg = "==================================================";
                 cout << input_msg << endl;
                 this->print_labels();
                 cout << "Input Class Name( delete ): ";
-                cin >> choiced_class_name;
+                getline(cin, choiced_class_name);
 
                 choiced_class_name = this->remove_space(choiced_class_name);
 
@@ -757,7 +757,7 @@ void SemiAutomaticLabel::start()
                     cout << input_msg << endl;
                     this->print_labels();
                     cout << "Input Class Name( delete ): ";
-                    cin >> choiced_class_name;
+                    getline(cin, choiced_class_name);
 
                     choiced_class_name = this->remove_space(choiced_class_name);
                 }
@@ -788,7 +788,8 @@ void SemiAutomaticLabel::start()
                           Scalar(0, 0, 255),
                           3);
 
-                string plot_msg = (!removeItem) ? choiced_class_name : "Delete";
+                string plot_msg = (!removeItem) ? choiced_class_name : (this->delete_one_class) ? "Delete(" + choiced_class_name + ")"
+                                                                                                : "Delete";
                 putText(frame, plot_msg, Point(pointxy[0], pointxy[1] - 10), FONT_HERSHEY_DUPLEX, 1,
                         Scalar(0, 0, 255),
                         1, LINE_AA);

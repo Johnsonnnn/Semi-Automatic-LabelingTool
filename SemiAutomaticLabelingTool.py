@@ -387,7 +387,7 @@ class SemiAutomaticLabel:
 
                     cv2.rectangle(frame, (pointxy[0], pointxy[1]), (pointxy[2], pointxy[3]), (0, 0, 255), 3)
                     cv2.putText(
-                        frame, choiced_class_name if not removeItem else 'Delete', (pointxy[0], pointxy[1] - 10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
+                        frame, choiced_class_name if not removeItem else 'Delete' if not self.delete_one_class else f'Delete({choiced_class_name})', (pointxy[0], pointxy[1] - 10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
                     if self.write_txt and not removeItem:
                         self.write_point2txt(yolo_point, choiced_class_name, save_txt_path)
 
