@@ -14,13 +14,9 @@ set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include_directories(${OpenCV_INCLUDE_DIRS} includes)
 
-aux_source_directory(src SRC_LIST)
-message(STATUS "source file list: ${SRC_LIST}")
-
 add_executable ( ${executable_name}
     SemiAutomaticLabelingTool.cpp
     SemiAutomaticLabelingTool.h
 )
 
-target_link_libraries  (${executable_name} ${OpenCV_LIBRARIES} yaml-cpp)
-target_link_libraries  (${executable_name} ${OpenCV_LIBRARIES} -lyaml-cpp)
+target_link_libraries (${executable_name} ${OpenCV_LIBRARIES} yaml-cpp)
